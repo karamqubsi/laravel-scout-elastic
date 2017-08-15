@@ -17,7 +17,6 @@ class ElasticsearchProvider extends ServiceProvider
   {
     $this->client = ElasticBuilder::create()
     ->setHosts(config('scout.elasticsearch.hosts'))
-    ->setSerializer('\Elasticsearch\Serializers\EverythingToJSONSerializer')
     ->build();
     /* check for index */
     $indexpara['index'] = config('scout.elasticsearch.index');
