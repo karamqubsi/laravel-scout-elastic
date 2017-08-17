@@ -132,12 +132,10 @@ class ElasticsearchEngine extends Engine
 				];
 			if (isset($this->customQueryBody)){
 				// converting the array into json will make it easy to replace the template texts ___query___
-					$jsonformat = json_encode($this->customQueryBody);
-					// this will replace ___query___ with the real query that came here .
-					$jsonformat = str_replace("___query___", $builder->query, $jsonformat);
-					// after that this will reconvert our JSON data to PHP array .
-					$toArray = json_decode($jsonformat,true);
-				  $params['body'] = $toArray;
+					$query = &$this->customQueryBody;
+					$queryString = &$query['query']['bool']['must'][0]['query_string']['query'];
+					$queryString = str_replace("___query___",$builder->query,$queryString);
+				  $params['body'] = $query;
 			}else {
 				$params['body'] = [
 												'query' => [
