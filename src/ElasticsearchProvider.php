@@ -11,7 +11,11 @@ class ElasticsearchProvider extends ServiceProvider
   /**
   * Bootstrap the application services.
   */
-  protected $client;
+	public function __construct(){
+		$this->customQueryBody = config('scout.elasticsearch.customQueryBody');
+	}
+	protected $client;
+
 
   public function boot()
   {
@@ -23,15 +27,7 @@ class ElasticsearchProvider extends ServiceProvider
     $isIndexCreated = $this->client->indices()->exists($indexpara);
     #if it wasn't created , create it with this sittings.
     if (!$isIndexCreated) {
-      $params = [
-        'index' => config('scout.elasticsearch.index'),
-        'body' => [
-          'settings' => [
-            'number_of_shards' => 3,
-            'number_of_replicas' => 2
-          ]
-        ]
-      ];
+      $params = config('scout.elasticsearch.initIndexParam');
       // Create the index with mappings and settings now
       $response = $this->client->indices()->create($params);
 
@@ -41,7 +37,8 @@ class ElasticsearchProvider extends ServiceProvider
 
     app(EngineManager::class)->extend('elasticsearch', function($app) {
       return new ElasticsearchEngine($this->client,
-      config('scout.elasticsearch.index')
+      config('scout.elasticsearch.index'),
+			$this->customQueryBody
     );
   });
 }

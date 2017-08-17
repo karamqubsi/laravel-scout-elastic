@@ -23,10 +23,11 @@ class ElasticsearchEngine extends Engine
      * @param  \Elasticsearch\Client  $elastic
      * @return void
      */
-    public function __construct(Elastic $elastic, $index)
+    public function __construct(Elastic $elastic, $index, $customQueryBody)
     {
         $this->elastic = $elastic;
         $this->index = $index;
+				$this->customQueryBody = $customQueryBody;
     }
 
     /**
@@ -123,19 +124,31 @@ class ElasticsearchEngine extends Engine
      * @param  array  $options
      * @return mixed
      */
-    protected function performSearch(Builder $builder, array $options = [])
+    protected function performSearch(Builder $builder, array $options = [] )
     {
-        $params = [
-            'index' => $this->index,
-            'type' => $builder->index ?: $builder->model->searchableAs(),
-            'body' => [
-                'query' => [
-                    'bool' => [
-                        'must' => [['query_string' => [ 'query' => "text.0:{$builder->query}"]]]
-                    ]
-                ]
-            ]
-        ];
+			$params = [
+					'index' => $this->index,
+					'type' => $builder->index ?: $builder->model->searchableAs()
+				];
+			if (isset($this->customQueryBody)){
+				// converting the array into json will make it easy to replace the template texts ___query___
+					$jsonformat = json_encode($this->customQueryBody);
+					// this will replace ___query___ with the real query that came here .
+					$jsonformat = str_replace("___query___", $builder->query, $jsonformat);
+					// after that this will reconvert our JSON data to PHP array .
+					$toArray = json_decode($jsonformat,true);
+				  $params['body'] = $toArray;
+			}else {
+				$params['body'] = [
+												'query' => [
+														'bool' => [
+																'must' => [['query_string' => [ 'query' => "text.0:{$builder->query}"]]]
+														]
+												]
+										];
+
+			}
+
 
         if ($sort = $this->sort($builder)) {
             $params['body']['sort'] = $sort;
